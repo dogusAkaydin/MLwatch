@@ -8,6 +8,6 @@ Unpredictable shifts in live data is a common concern for many production ML mod
 
 ## How?
 
-Proposed architecture(./arch.jpg)
+![Proposed architecture](./arch.jpg)
 
 
