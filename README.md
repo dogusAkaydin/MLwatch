@@ -10,4 +10,7 @@ Unpredictable shifts in live data is a common concern for many production ML mod
 
 ![Proposed architecture](./arch.jpg)
 
+Data: Image-Net (14M images), Open Image dataset (9M images), or generally some labeled dataset with a pretrained model. 
+Ingestion: Kafka
+ML Model: The pretrained model of the data set. (Resnet, VGG, ...)
 
