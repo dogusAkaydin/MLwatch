@@ -4,7 +4,7 @@
 Glia is a data engineering infrastructure to enable continuous service, monitoring and training of machine learning (ML) models.
 
 ## Why?
-Unpredictable shifts in live data is a common concern for many production ML models. The ML model developers may not always have the metrics ready to help them decide when to retrain their models. As a result, they retrain the models at frequencies which may be more or less than actually needed. In additon, once they decide to retrain, they may not be able to incorporate new training data in their models. Glia aims to automate these tasks at scale.
+Online, responsive ML prediction is crucial for many use cases such as UAV operations, ETA predictions, fraud detection, etc. However, unpredictable shifts in live data is a common concern for many production ML models. The ML model developers may not always have the metrics ready to help them decide when to retrain their models. As a result, they retrain the models at frequencies which may be more or less than actually needed. In additon, once they decide to retrain, they may not be able to incorporate new training data in their models. Glia aims to automate these tasks at scale.
 
 ## Specifications:
 * Online prediction response time: <5 sec.
