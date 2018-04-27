@@ -8,7 +8,9 @@ Unpredictable shifts in live data is a common concern for many production ML mod
 
 ## Specifications:
 Online prediction response time: <5 sec.
+
 Online prediction rate         : O(1,000) per sec.
+
 Top-1 accuracy                 : >75%
 
 Batch processing mode          : Run when average Top-1 accuracy <90%
