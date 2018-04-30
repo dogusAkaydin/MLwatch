@@ -20,7 +20,7 @@ The primary data engineering challenge for this system is high-availability and 
 
 ## How?
 
-![Proposed architecture](./arch.jpg)
+![Proposed architecture](./visuals/arch.jpg)
 
 * Data: URL's to Image-Net (14M images), Open Image dataset (9M images), or generally some labeled dataset with a pretrained model. 
 * Ingestion: Kafka producers fetching URL's. For demo, the URL are read-off a text file.
