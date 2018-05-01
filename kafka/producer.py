@@ -1,20 +1,68 @@
+import os
+import sys
+import time
+import csv
+import numpy as np
+import json
+from urllib.request import Request, urlopen
+
 from kafka import KafkaProducer
 
-KAFKA_TOPIC = 'testing'
-KAFKA_BROKERS = 'localhost:9092'
+# TF-related imports
+# import tensorflow as tf
+# from datasets import imagenet
+# from nets import inception
+# from preprocessing import inception_preprocessing
 
-producer = KafkaProducer(bootstrap_servers=KAFKA_BROKERS)
-#producer = KafkaProducer()
+#slim = tf.contrib.slim
 
-# Must send bytes
-messages = [b'abc', b'def']
+#image_size = inception.inception_v1.default_image_size
 
-# Send the messages
-for m in messages:
-    producer.send(KAFKA_TOPIC, m).get(timeout=1)
+def main(urlFilePath = './url.txt'):
+    """Carry-out the main routine, return the wall clock time passed."""
+    t0wall = time.time()
 
-#producer = KafkaProducer(value_serializer=lambda, 
-#                         v: json.dumps(v).encode('utf-8'),
-#                         bootstrap_servers=KAFKA_BROKERS)
+    KAFKA_TOPIC = 'demo'
+    KAFKA_BROKERS = 'localhost:9092'
+  
+    producer = KafkaProducer(bootstrap_servers=KAFKA_BROKERS, 
+                             value_serializer=\
+                             lambda m: json.dumps(m).encode('UTF-8'))
 
+#    producer = KafkaProducer(bootstrap_servers=KAFKA_BROKERS)
+    
+    # Decoding problem in line 13073007
+    line_number = 1
+    with open(urlFilePath, 'r', errors='ignore') as urlFile:
+      #url = urlFile.readline().rstrip()
+      
+      records = csv.reader(urlFile, delimiter='\t')
+
+      for record in records:
+          #print(line_number, record)
+          line_number += 1
+          producer.send(KAFKA_TOPIC, [line_number,record]).get(timeout=1)
+
+      #producer.send(KAFKA_TOPIC, 
+      #              key=bytes([line_number]), 
+      #              value=url.encode('UTF-8')
+      #             ).get(timeout=1)
+
+    
+    dtWall = time.time() - t0wall
+    return dtWall
+
+if __name__ == '__main__':
+  """Command-line execution for producer.py"""
+ 
+  import argparse
+  parser = argparse.ArgumentParser(description=__doc__)
+  parser.add_argument('urlFilePath', 
+                      help='Path to the file listing one URL at each line'
+                     )
+  args = parser.parse_args()
+  #Add some input checks here:
+  urlFilePath = args.urlFilePath
+  dtWall = main(urlFilePath)
+  print('DONE in {0:10g} seconds of wall clock time'.format(dtWall))
 
