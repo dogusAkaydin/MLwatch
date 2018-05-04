@@ -13,9 +13,42 @@ from datasets import imagenet
 from nets import inception
 from preprocessing import inception_preprocessing
 # --------------------
+# Cassandra related imports
+
+import logging
+log = logging.getLogger()
+log.setLevel('INFO')
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+log.addHandler(handler)
+
+from cassandra import ConsistencyLevel
+from cassandra.cluster import Cluster
+from cassandra.query import SimpleStatement
 
 # --------------------
-# Kafka related work
+# Cassandra related initializations:
+
+KEYSPACE = "top5"
+
+cluster = Cluster(['127.0.0.1'])
+session = cluster.connect()
+
+log.info("setting keyspace...")
+session.set_keyspace(KEYSPACE)
+
+#query = SimpleStatement("""
+#    INSERT INTO Top5_InceptionV1 (reqID, p1, c1, p2, c2, p3, c3, p4, c4, p5, c5, url)
+#    VALUES (%(key)s, %(a)s, %(b)s)
+#    """, consistency_level=ConsistencyLevel.ONE)
+
+prepared = session.prepare("""
+    INSERT INTO Top5_InceptionV1 (reqID, p1, c1, p2, c2, p3, c3, p4, c4, p5, c5, url)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """)
+
+# --------------------
+# Kafka related initializations:
 KAFKA_TOPIC = 'demo'
 KAFKA_BROKERS = 'localhost:9092'
 
@@ -89,10 +122,42 @@ with tf.Graph().as_default():
                         sorted_inds = [i[0] for i in sorted(enumerate(-probabilities), key=lambda x:x[1])]
                     names = imagenet.create_readable_names_for_imagenet_labels()
                     #result_text=''
+                    top5_probs=[]
+                    top5_names=[]
                     for i in range(5):
                         index = sorted_inds[i]
-                        print('Probability %0.2f%% => [%s]' % (100*probabilities[index], names[index]))
-                    #tf.reset_default_graph()
+                        top5_probs.append(int(100*probabilities[index]))
+                        top5_names.append(names[index])
+                        
+                        print('Probability %0.2f%% => [%s]' % (int(100*probabilities[index]), names[index]))
+                    log.info("inserting row %d" % record_number)
+                    #session.execute(query, dict(key="key%d" % i, a='a', b='b'))
+                    session.execute(prepared.bind(("key%d" % record_number,
+                                                   top5_names[0], top5_probs[0], 
+                                                   top5_names[1], top5_probs[1], 
+                                                   top5_names[2], top5_probs[2], 
+                                                   top5_names[3], top5_probs[3], 
+                                                   top5_names[4], top5_probs[4], 
+                                                   url
+                                                 )))
+
         except KeyboardInterrupt:
+               
+
+            future = session.execute_async("SELECT * FROM Top5_InceptionV1")
+            #log.info("key\tcol1\tcol2")
+            #log.info("---\t----\t----")
+
+            try:
+                rows = future.result()
+            except Exception:
+                log.exception()
+            
+            for row in rows:
+                #log.info(row)
+                print(row.p1, row.c1, row.url)
+            
+
+            #session.execute("DROP KEYSPACE " + KEYSPACE)
             sys.exit
 
