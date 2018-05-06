@@ -17,7 +17,7 @@ from preprocessing import inception_preprocessing
 
 import logging
 log = logging.getLogger()
-log.setLevel('INFO')
+log.setLevel('CRITICAL')
 handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
 log.addHandler(handler)
@@ -80,6 +80,7 @@ with tf.Graph().as_default():
                 wnid = record[0]
                 url  = record[1]
                 req = Request(url)
+                print('-'*80)
                 try:
                     image_string = urlopen(req).read()
                 except URLError as e:
@@ -99,48 +100,49 @@ with tf.Graph().as_default():
                 except socket.timeout:
                         print(record_number, 'Socket timeout: ')
                 else:
-                    # everything is fine
-                    print(record_number, 'Valid', url)
-                    image = tf.image.decode_jpeg(image_string, channels=3)
-                    processed_image = inception_preprocessing.preprocess_image(image, image_size, image_size, is_training=False)
-                    processed_images  = tf.expand_dims(processed_image, 0)
-                    # Create the model, use the default arg scope to configure the batch norm parameters.
-                    with slim.arg_scope(inception.inception_v1_arg_scope()):
-                        #reuse=True
-                        #tf.AUTO_REUSE
-                        logits, _ = inception.inception_v1(processed_images, num_classes=1001, is_training=False, reuse=tf.AUTO_REUSE)
-                    probabilities = tf.nn.softmax(logits)
-                    checkpoints_dir='slim_pretrained' 
-                    init_fn = slim.assign_from_checkpoint_fn(
-                        os.path.join(checkpoints_dir, 'inception_v1.ckpt'),
-                        slim.get_variables_to_restore())
+                    try:
+                        print('ReqID: {0} | URL: {1:60s}'.format(record_number, url))
+                        image = tf.image.decode_jpeg(image_string, channels=3)
+                        processed_image = inception_preprocessing.preprocess_image(image, image_size, image_size, is_training=False)
+                        processed_images  = tf.expand_dims(processed_image, 0)
+                        # Create the model, use the default arg scope to configure the batch norm parameters.
+                        with slim.arg_scope(inception.inception_v1_arg_scope()):
+                            #reuse=True
+                            #tf.AUTO_REUSE
+                            logits, _ = inception.inception_v1(processed_images, num_classes=1001, is_training=False, reuse=tf.AUTO_REUSE)
+                        probabilities = tf.nn.softmax(logits)
+                        checkpoints_dir='slim_pretrained' 
+                        init_fn = slim.assign_from_checkpoint_fn(
+                            os.path.join(checkpoints_dir, 'inception_v1.ckpt'),
+                            slim.get_variables_to_restore())
 
-                    with tf.Session() as sess:
-                        init_fn(sess)
-                        np_image, probabilities = sess.run([image, probabilities])
-                        probabilities = probabilities[0, 0:]
-                        sorted_inds = [i[0] for i in sorted(enumerate(-probabilities), key=lambda x:x[1])]
-                    names = imagenet.create_readable_names_for_imagenet_labels()
-                    #result_text=''
-                    top5_probs=[]
-                    top5_names=[]
-                    for i in range(5):
-                        index = sorted_inds[i]
-                        top5_probs.append(int(100*probabilities[index]))
-                        top5_names.append(names[index])
-                        
-                        print('Probability %0.2f%% => [%s]' % (int(100*probabilities[index]), names[index]))
-                    log.info("inserting row %d" % record_number)
-                    #session.execute(query, dict(key="key%d" % i, a='a', b='b'))
-                    session.execute(prepared.bind(("key%d" % record_number,
-                                                   top5_names[0], top5_probs[0], 
-                                                   top5_names[1], top5_probs[1], 
-                                                   top5_names[2], top5_probs[2], 
-                                                   top5_names[3], top5_probs[3], 
-                                                   top5_names[4], top5_probs[4], 
-                                                   url
-                                                 )))
-
+                        with tf.Session() as sess:
+                            init_fn(sess)
+                            np_image, probabilities = sess.run([image, probabilities])
+                            probabilities = probabilities[0, 0:]
+                            sorted_inds = [i[0] for i in sorted(enumerate(-probabilities), key=lambda x:x[1])]
+                        names = imagenet.create_readable_names_for_imagenet_labels()
+                        #result_text=''
+                        top5_probs=[]
+                        top5_names=[]
+                        for i in range(5):
+                            index = sorted_inds[i]
+                            top5_probs.append(int(100*probabilities[index]))
+                            top5_names.append(names[index])
+                            #print('[%s] (%d%%)' % (names[index], int(100*probabilities[index])))
+                            print('{0:<20s} : ({1:2d}%)'.format(names[index],int(100*probabilities[index])))
+                        log.info("inserting row %d" % record_number)
+                        #session.execute(query, dict(key="key%d" % i, a='a', b='b'))
+                        session.execute(prepared.bind(("key%d" % record_number,
+                                                       top5_names[0], top5_probs[0], 
+                                                       top5_names[1], top5_probs[1], 
+                                                       top5_names[2], top5_probs[2], 
+                                                       top5_names[3], top5_probs[3], 
+                                                       top5_names[4], top5_probs[4], 
+                                                       url
+                                                     )))
+                    except:
+                        print('Unhandled Tensorflow error')
         except KeyboardInterrupt:
                
 
