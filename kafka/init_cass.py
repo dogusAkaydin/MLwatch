@@ -20,7 +20,7 @@ from cassandra.query import SimpleStatement
 # --------------------
 # Cassandra related initializations:
 
-KEYSPACE = "top5"
+KEYSPACE = "top1"
 
 cluster = Cluster(['127.0.0.1'])
 session = cluster.connect()
@@ -44,18 +44,10 @@ session.set_keyspace(KEYSPACE)
 
 log.info("creating table...")
 session.execute("""
-    CREATE TABLE Top5_InceptionV1 (
+    CREATE TABLE Top1_Inception (
         reqID text,
         p1 text,
-        c1 int,
-        p2 text,
-        c2 int,
-        p3 text,
-        c3 int,
-        p4 text,
-        c4 int,
-        p5 text,
-        c5 int,
+        c1 float,
         url text,
         PRIMARY KEY (reqID)
     )
