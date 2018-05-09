@@ -20,6 +20,7 @@
 *.rar
 *.tar
 *.zip
+*.tgz
 
 # Logs and databases #
 ######################
@@ -51,6 +52,7 @@ Thumbs.db
 # Large files
 ######################
 /data/imagenet/*
+/ml_model/fall11_urls.txt
 
 # Other
 ######################

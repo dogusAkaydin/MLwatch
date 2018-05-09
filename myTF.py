@@ -8,8 +8,9 @@ import re
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.platform import gfile
+import config
 
-model_dir = './ml_model'
+model_dir = config.MODEL_DIR
 num_top_predictions = 1
 
 timeout = 0.5 # [sec.]

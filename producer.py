@@ -1,34 +1,26 @@
-#! /home/ubt/anaconda3/bin/python
+#! /usr/bin/python3
 import os
 import sys
 import time
 import csv
 import numpy as np
 import json
-#from urllib.request import Request, urlopen
-#from urllib.error import  URLError
-#import socket
-#import errno
+import config
 
 from kafka import KafkaProducer
 
-# TF-related imports
-# import tensorflow as tf
-# from datasets import imagenet
-# from nets import inception
-# from preprocessing import inception_preprocessing
-
-#slim = tf.contrib.slim
-
-#image_size = inception.inception_v1.default_image_size
-
-def main(urlFilePath = './url.txt'):
+def main():
     """Carry-out the main routine, return the wall clock time passed."""
     t0wall = time.time()
+    
+    urlFilePath = os.path.join(config.MODEL_DIR, 'fall11_urls.txt')
 
-    KAFKA_TOPIC = 'demo'
-    KAFKA_BROKERS = 'localhost:9092'
-  
+#    KAFKA_TOPIC = 'demo'
+#    KAFKA_BROKERS = 'localhost:9092'
+ 
+    KAFKA_TOPIC   = config.KAFKA_CONFIG['topic'] 
+    KAFKA_BROKERS = config.KAFKA_CONFIG['brokers'] 
+ 
     producer = KafkaProducer(bootstrap_servers=KAFKA_BROKERS, 
                              value_serializer=\
                              lambda m: json.dumps(m).encode('UTF-8'))
@@ -57,15 +49,7 @@ def main(urlFilePath = './url.txt'):
 
 if __name__ == '__main__':
     """Command-line execution for producer.py"""
-   
-    import argparse
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('urlFilePath', 
-                        help='Path to the file listing one URL at each line'
-                       )
-    args = parser.parse_args()
-    #Add some input checks here:
-    urlFilePath = args.urlFilePath
-    dtWall = main(urlFilePath)
+    
+    dtWall = main()
     print('DONE in {0:10g} seconds of wall clock time'.format(dtWall))
   
