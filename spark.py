@@ -1,4 +1,4 @@
-# Basics
+#! /home/ubt/anaconda3/bin/python
 import json
 import os  
 # Spark
@@ -77,15 +77,7 @@ def createContext():
     #                    .map(lambda x:print('HAHAHAH'))
     #               )
     #countClasses.pprint()
-
-    from pyspark.sql import Window
-    from pyspark.sql import functions as F
-
-    windowval = (Window.partitionBy('class').orderBy('time')
-                 .rangeBetween(Window.unboundedPreceding, 0))
-                 df_w_cumsum = df.withColumn('cum_sum', F.sum('value').over(windowval))
-                 df_w_cumsum.show()
-    
+   
     return ssc
 
 ssc = createContext()
