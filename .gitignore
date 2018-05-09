@@ -45,8 +45,8 @@ Thumbs.db
 
 # Tensorflow files
 ######################
-*.ckpt
-*.pb
+#*.ckpt
+#*.pb
 
 # Large files
 ######################
