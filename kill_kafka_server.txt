@@ -1,0 +1,2 @@
+lsof -i :9092
+kill -9 <PID>

@@ -1,21 +1,22 @@
 import sys
 import os
 import json
-#from urllib.request import Request, urlopen
-#from urllib.error import  URLError
+import re
 import urllib
 import socket
 import errno
 import numpy as np
+# --------------------
+# Kafka related imports
 from kafka import KafkaConsumer
 # --------------------
 # Tensorflow related imports
 import tensorflow as tf
-from datasets import imagenet
-from nets import inception
-from preprocessing import inception_preprocessing
-import re
 from tensorflow.python.platform import gfile
+# --------------------
+# Spark related imports
+from pyspark import SparkContext
+
 # --------------------
 # Cassandra related imports
 
@@ -69,7 +70,7 @@ socket.setdefaulttimeout(timeout)
 # --------------------
 # Tensorflow related work
 
-model_dir = './inception'
+model_dir = './ml_model'
 num_top_predictions = 1
 
 class NodeLookup(object):
@@ -137,7 +138,8 @@ class NodeLookup(object):
 
 def infer(img_url):
     # Creates a new TensorFlow graph of computation and imports the model
-    with gfile.FastGFile( './inception/classify_image_graph_def.pb', 'rb') as f, \
+    model_path = os.path.join(model_dir, 'classify_image_graph_def.pb')
+    with gfile.FastGFile(model_path, 'rb') as f, \
         tf.Graph().as_default() as g:
         model_data = f.read()
         graph_def = tf.GraphDef()
@@ -176,7 +178,6 @@ for msg in consumer:
         for name, score in top_k:
             print('{0:.<s} : {1:<2.0f}%'.format(name[:50], score))
         #log.info("inserting row %d" % record_number)
-        ##session.execute(query, dict(key="key%d" % i, a='a', b='b'))
         session.execute(prepared.bind(("key%d" % record_number, top_k[0][0], top_k[0][1], url)))
     except KeyboardInterrupt:
         future = session.execute_async("SELECT * FROM Top1_Inception")
@@ -189,7 +190,7 @@ for msg in consumer:
             print('Name:{0:.<20s}, Score:{1:4.1f}, URL:{2:.<20s}'.format(row.p1, row.c1, row.url))
         sys.exit()
     except:
-        print('Unhandled error')
+        print('Error.')
 
 #if __name__ == '__main__':
 #    import argparse

@@ -49,7 +49,9 @@ Thumbs.db
 *.pb
 
 # Large files
+######################
 /data/imagenet/*
 
-
-
+# Other
+######################
+*.ignore

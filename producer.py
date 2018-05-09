@@ -1,3 +1,4 @@
+#! /home/ubt/anaconda3/bin/python
 import os
 import sys
 import time
@@ -38,6 +39,7 @@ def main(urlFilePath = './url.txt'):
             #print(record_number)
             producer.send(KAFKA_TOPIC, [record_number, record]).get(timeout=1)
             record_number += 1
+            time.sleep(.1)
 
         #producer.send(KAFKA_TOPIC, 
         #              key=bytes([line_number]), 
