@@ -20,12 +20,14 @@ KAFKA_BROKERS = 'localhost:9092'
 
 # ---------------------
 def createContext():
-    import myTF
-    infer = myTF.infer
-    sc = SparkContext(master="local[1]", appName="TensorStream")
+    #sc = SparkContext(master="local[1]", appName="TensorStream")
+    sc = SparkContext(appName="TensorStream")
     #sc.setLogLevel("WARN")
     sc.setLogLevel("ERROR")
     sc.addPyFile('myTF.py')
+    sc.addPyFile('config.py')
+    import myTF
+    infer = myTF.infer
     
     ssc = StreamingContext(sc, 1)
     
@@ -50,12 +52,13 @@ def createContext():
 
     # Print the URL requests this batch
     parsed = kafkaStream.map(lambda m: json.loads(m[1]))
-
     inferred = parsed.map(infer)
+    inferred.pprint()
+
 
     # Filter for None
     filtered = inferred.filter(lambda x: not x is None)
-    filtered.pprint()  
+    #filtered.pprint()  
   
     #kvStream= (filtered
     #                  .keyBy(lambda d: d.get('class'))
