@@ -25,18 +25,14 @@ def main():
                              value_serializer=\
                              lambda m: json.dumps(m).encode('UTF-8'))
     
-
-    #producer = KafkaProducer(bootstrap_servers=KAFKA_BROKERS) 
-
     record_number = 1
     with open(urlFilePath, 'r', errors='ignore') as urlFile:
         records = csv.reader(urlFile, delimiter='\t')
         for record in records:
             #print(record_number)
             producer.send(KAFKA_TOPIC, [record_number, record]).get(timeout=1)
-            #producer.send(KAFKA_TOPIC, [record_number, record].encode('utf-8')).get(timeout=1)
             record_number += 1
-            time.sleep(.1)
+            time.sleep(1)
 
         #producer.send(KAFKA_TOPIC, 
         #              key=bytes([line_number]), 
