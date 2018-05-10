@@ -57,3 +57,4 @@ Thumbs.db
 # Other
 ######################
 *.ignore
+/metastore_db/

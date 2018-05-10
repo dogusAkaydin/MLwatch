@@ -1,2 +1,2 @@
-#pip3 install tensorflow
-pip3 install kafka-python
+pip install tensorflow
+pip install kafka-python

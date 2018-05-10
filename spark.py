@@ -1,11 +1,10 @@
-#! /usr/bin/python3
 import json
 import os
 import config  
 # Spark
-os.environ['PYSPARK_SUBMIT_ARGS'] = '--packages org.apache.spark:spark-streaming-kafka-0-8_2.11:2.0.2 pyspark-shell'
-os.environ['PYSPARK_PYTHON']='python3'
-os.environ['PYSPARK_DRIVER_PYTHON']='python3'
+#os.environ['PYSPARK_SUBMIT_ARGS'] = '--packages org.apache.spark:spark-streaming-kafka-0-8_2.11:2.0.2 pyspark-shell'
+os.environ['PYSPARK_PYTHON']='python'
+os.environ['PYSPARK_DRIVER_PYTHON']='python'
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext  
 from pyspark.streaming.kafka import KafkaUtils
@@ -21,12 +20,12 @@ KAFKA_BROKERS = 'localhost:9092'
 
 # ---------------------
 def createContext():
-    #import myTF
-    #infer = myTF.infer
+    import myTF
+    infer = myTF.infer
     sc = SparkContext(master="local[1]", appName="TensorStream")
     #sc.setLogLevel("WARN")
     sc.setLogLevel("ERROR")
-    #sc.addPyFile('myTF.py')
+    sc.addPyFile('myTF.py')
     
     ssc = StreamingContext(sc, 1)
     
@@ -50,13 +49,13 @@ def createContext():
     #count_window.pprint()
 
     # Print the URL requests this batch
-    #parsed = kafkaStream.map(lambda m: json.loads(m[1]))
+    parsed = kafkaStream.map(lambda m: json.loads(m[1]))
 
-    #inferred = parsed.map(infer)
+    inferred = parsed.map(infer)
 
     # Filter for None
-    #filtered = inferred.filter(lambda x: not x is None)
-    #filtered.pprint()  
+    filtered = inferred.filter(lambda x: not x is None)
+    filtered.pprint()  
   
     #kvStream= (filtered
     #                  .keyBy(lambda d: d.get('class'))
@@ -79,9 +78,9 @@ def createContext():
    
     return ssc
 
-#ssc = createContext()
+ssc = createContext()
 #ssc.checkpoint('/tmp/spark_streaming/checkpoint')
 #ssc = StreamingContext.getOrCreate('/tmp/checkpoint_v01', lambda: createContext())  
-ssc = StreamingContext.getOrCreate('/tmp/checkpoint_v01', lambda: createContext())  
+#ssc = StreamingContext.getOrCreate('/tmp/checkpoint_v01', lambda: createContext())  
 ssc.start()  
 ssc.awaitTermination()

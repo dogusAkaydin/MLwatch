@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#! /usr/bin/python
 import os
 import sys
 import time
@@ -6,7 +6,7 @@ import csv
 import numpy as np
 import json
 import config
-
+import codecs #python2 
 from kafka import KafkaProducer
 
 def main():
@@ -26,13 +26,15 @@ def main():
                              lambda m: json.dumps(m).encode('UTF-8'))
     
     record_number = 1
-    with open(urlFilePath, 'r', errors='ignore') as urlFile:
+    #with open(urlFilePath, 'r', errors='ignore') as urlFile: # py3
+    #with codecs.open(urlFilePath, 'r',  encoding='utf8', errors='ignore') as urlFile: #py2
+    with codecs.open(urlFilePath, 'r', errors='ignore') as urlFile: #py2
         records = csv.reader(urlFile, delimiter='\t')
         for record in records:
             #print(record_number)
             producer.send(KAFKA_TOPIC, [record_number, record]).get(timeout=1)
             record_number += 1
-            time.sleep(1)
+            time.sleep(.1)
 
         #producer.send(KAFKA_TOPIC, 
         #              key=bytes([line_number]), 

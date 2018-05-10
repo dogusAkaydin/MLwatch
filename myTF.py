@@ -1,7 +1,11 @@
 import os
-import urllib
-from urllib.request import Request, urlopen
-from urllib.error import  URLError
+## -- py3 --
+#import urllib
+#from urllib.error import  URLError
+## ---------
+import urllib2
+from urllib2 import URLError
+## ---------
 import socket
 import errno
 import re
@@ -10,6 +14,27 @@ import tensorflow as tf
 from tensorflow.python.platform import gfile
 import config
 
+model_dir = config.MODEL_DIR
+num_top_predictions = 1
+
+timeout = 0.2 # [sec.]
+#socket.setdefaulttimeout(timeout)
+
+## ------------------------------------------------------
+## Minimal Working Example for Debugging
+#def infer(i):
+#  import tensorflow as tf
+#  with tf.Graph().as_default() as g:
+import socket
+import errno
+import re
+import numpy as np
+import tensorflow as tf
+from tensorflow.python.platform import gfile
+import config
+
+
+print('HELLEO')
 model_dir = config.MODEL_DIR
 num_top_predictions = 1
 
@@ -36,7 +61,8 @@ def infer(msg):
     # Creates a new TensorFlow graph of computation and imports the model
     try:
         # Loads the image data from the URL:
-        image_data = urllib.request.urlopen(url, timeout=timeout).read()
+        #image_data = urllib.request.urlopen(url, timeout=timeout).read()
+        image_data = urllib2.urlopen(url, timeout=timeout).read()
         model_path = os.path.join(model_dir, 'classify_image_graph_def.pb')
         with gfile.FastGFile(model_path, 'rb') as f, \
             tf.Graph().as_default() as g:
@@ -67,28 +93,28 @@ def infer(msg):
                 return {'class':top_k_names[0], 'score':top_k_probs[0]}
     except URLError as e:
         if hasattr(e, 'reason'):
-            #print(record_number, 'URL access error: ', e.reason)
+            print(record_number, 'URL access error: ', e.reason)
             pass
         elif hasattr(e, 'code'):
-            #print(record_number, 'URL access error: ', e.code)
+            print(record_number, 'URL access error: ', e.code)
             pass
         else:
-            #print(record_number, 'Unknown URL error: ')
+            print(record_number, 'Unknown URL error: ')
             pass
         return None
     except socket.timeout as e:
-        #print(record_number, 'URL access error: ', 'Socket timed out')
+        print(record_number, 'URL access error: ', 'Socket timed out')
         return None
     except socket.error as e:
         if e.errno == errno.ECONNRESET:
-            #print(record_number, 'URL access error: ', e.errno)
+            print(record_number, 'URL access error: ', e.errno)
             pass
         else:
-            #print(record_number, 'Unhandled socket error', e.errno)
+            print(record_number, 'Unhandled socket error', e.errno)
             pass
         return None
     except:
-        #print('Invalid image data')
+        print('Invalid image data')
         return None
 
 class NodeLookup(object):
