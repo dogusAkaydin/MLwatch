@@ -41,20 +41,15 @@ socket.setdefaulttimeout(None)
 ##
 
 def infer(msg, model_data_bc):
-    #record_number = msg[0]
-    #record = msg[1]
-    #wnid = record[0]
-    #url  = record[1]
-    record_number = 1
-    record = 'a'
-    wnid = 'b'
-    url  = 'a'
+    record_number = msg[0]
+    record = msg[1]
+    wnid = record[0]
+    url  = record[1]
     # Creates a new TensorFlow graph of computation and imports the model
     try:
 #        # Loads the image data from the URL:
 #        #image_data = urllib.request.urlopen(url, timeout=timeout).read() # py2
-         #image_data = urllib2.urlopen(url, timeout=timeout).read()
-        image_data = msg
+        image_data = urllib2.urlopen(url, timeout=timeout).read()
         graph_def = tf.GraphDef()
         #graph_def.ParseFromString(model_data)
         graph_def.ParseFromString(model_data_bc.value)
