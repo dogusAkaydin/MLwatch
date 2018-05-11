@@ -12,7 +12,7 @@ from pyspark.streaming.kafka import KafkaUtils
 from kafka import KafkaConsumer
 from tensorflow.python.platform import gfile
 import tensorflow as tf
-import base64
+
 import pyspark_cassandra
 
 # --------------------
@@ -34,14 +34,11 @@ def createContext():
     sc.addPyFile('config.py')
     import tflow
     infer = tflow.infer
-     
-    def ser(x):
-        #return base64.b64decode(x)
-        return x
     
     model_data_bc = None
     model_path = os.path.join(model_dir, 'classify_image_graph_def.pb') #
-    with gfile.FastGFile(model_path, 'rb') as f:
+    with gfile.FastGFile(model_path, 'rb') as f, \
+        tf.Graph().as_default() as g:
         model_data = f.read()
         model_data_bc = sc.broadcast(model_data)
 
@@ -51,10 +48,8 @@ def createContext():
     kafkaStream = KafkaUtils.createDirectStream(
                       ssc, 
                       ['demo'], 
-                      {"metadata.broker.list":'localhost:9092'},
-                      keyDecoder=ser, valueDecoder=ser 
+                      {"metadata.broker.list":'localhost:9092'}
                                                 )
-    #kafkaStream.pprint()
     
     # Count number of requests in the batch
     count_this_batch = kafkaStream.count().map(
@@ -67,10 +62,7 @@ def createContext():
     #                   lambda x:('Requests this window: %s' % x)
     #                                                  )
     #count_window.pprint()
-     
-    inferred = kafkaStream.map(lambda x: infer(x, model_data_bc))
-    inferred.pprint()
-    '''
+
     # Print the URL requests this batch
     parsed   = kafkaStream.map(lambda m: json.loads(m[1]))
     reparted = parsed.repartition(18)
@@ -93,7 +85,7 @@ def createContext():
     #                    .map(lambda x:print('HAHAHAH'))
     #               )
     #countClasses.pprint()
-    '''   
+   
     return ssc
 
 ssc = createContext()
