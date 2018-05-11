@@ -10,6 +10,11 @@ from pyspark.streaming import StreamingContext
 from pyspark.streaming.kafka import KafkaUtils
 # Kafka
 from kafka import KafkaConsumer
+from tensorflow.python.platform import gfile
+import tensorflow as tf
+
+import pyspark_cassandra
+
 # --------------------
 # Kafka related initializations:
 #KAFKA_TOPIC   = config.KAFKA_CONFIG['topic'] 
@@ -18,18 +23,26 @@ from kafka import KafkaConsumer
 KAFKA_TOPIC = 'demo'
 KAFKA_BROKERS = 'localhost:9092'
 
+model_dir = config.MODEL_DIR
 # ---------------------
 def createContext():
     #sc = SparkContext(master="local[1]", appName="TensorStream")
     sc = SparkContext(appName="TensorStream")
     #sc.setLogLevel("WARN")
     sc.setLogLevel("ERROR")
-    sc.addPyFile('myTF.py')
+    sc.addPyFile('tflow.py')
     sc.addPyFile('config.py')
-    import myTF
-    infer = myTF.infer
+    import tflow
+    infer = tflow.infer
     
-    ssc = StreamingContext(sc, 1)
+    model_data_bc = None
+    model_path = os.path.join(model_dir, 'classify_image_graph_def.pb') #
+    with gfile.FastGFile(model_path, 'rb') as f, \
+        tf.Graph().as_default() as g:
+        model_data = f.read()
+        model_data_bc = sc.broadcast(model_data)
+
+    ssc = StreamingContext(sc, 2)
     
     # Define Kafka Consumer
     kafkaStream = KafkaUtils.createDirectStream(
@@ -51,22 +64,16 @@ def createContext():
     #count_window.pprint()
 
     # Print the URL requests this batch
-    parsed = kafkaStream.map(lambda m: json.loads(m[1]))
-    inferred = parsed.map(infer)
+    parsed   = kafkaStream.map(lambda m: json.loads(m[1]))
+    reparted = parsed.repartition(18)
+    inferred = reparted.map(lambda x: infer(x, model_data_bc))
+    #inferred = parsed.map(lambda x: infer(x, model_data_bc))
     inferred.pprint()
 
-
-    # Filter for None
+    # Filter for None outputs
     filtered = inferred.filter(lambda x: not x is None)
     #filtered.pprint()  
   
-    #kvStream= (filtered
-    #                  .keyBy(lambda d: d.get('class'))
-    #                  .reduceByKey(lambda x, y: x)
-    #                  .values())
-
-    #kvStream.pprint()
-
     #classes = filtered.map(lambda inference: inference['class'])
     #classes.pprint()
 

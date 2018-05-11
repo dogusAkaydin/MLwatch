@@ -34,14 +34,8 @@ def main():
             #print(record_number)
             producer.send(KAFKA_TOPIC, [record_number, record]).get(timeout=1)
             record_number += 1
-            time.sleep(.1)
+            time.sleep(0.1)
 
-        #producer.send(KAFKA_TOPIC, 
-        #              key=bytes([line_number]), 
-        #              value=url.encode('UTF-8')
-        #             ).get(timeout=1)
-
-      
     dtWall = time.time() - t0wall
     return dtWall
 
