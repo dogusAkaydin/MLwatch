@@ -12,7 +12,7 @@ import re
 import numpy as np
 import tensorflow as tf
 import config
-
+import base64
 num_top_predictions = 1
 
 timeout = 0.1 # [sec.]
@@ -45,16 +45,12 @@ def infer(msg, model_data_bc):
     #record = msg[1]
     #wnid = record[0]
     #url  = record[1]
-    record_number = 1
-    record = 'a'
-    wnid = 'b'
-    url  = 'a'
     # Creates a new TensorFlow graph of computation and imports the model
-    try:
+#    try:
 #        # Loads the image data from the URL:
 #        #image_data = urllib.request.urlopen(url, timeout=timeout).read() # py2
          #image_data = urllib2.urlopen(url, timeout=timeout).read()
-        image_data = msg
+        image_data = base64.b64decode(msg[1])
         graph_def = tf.GraphDef()
         #graph_def.ParseFromString(model_data)
         graph_def.ParseFromString(model_data_bc.value)
@@ -102,9 +98,9 @@ def infer(msg, model_data_bc):
 #            err=(record_number, 'Unhandled socket error', e.errno)
 #            pass
 #        return err
-    except:
-        err=('Invalid image data')
-        return err
+#    except:
+#        err=('Invalid image data')
+#        return err
 
 
 #--------------- NOT USED

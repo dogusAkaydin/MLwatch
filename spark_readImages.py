@@ -30,14 +30,17 @@ def createContext():
     sc = SparkContext(appName="TensorStream")
     #sc.setLogLevel("WARN")
     sc.setLogLevel("ERROR")
-    sc.addPyFile('tflow.py')
+    sc.addPyFile('tflow_readImages.py')
     sc.addPyFile('config.py')
-    import tflow
-    infer = tflow.infer
+    import tflow_readImages
+    infer = tflow_readImages.infer
      
-    def ser(x):
-        #return base64.b64decode(x)
-        return x
+#    def ser(x):
+#        #return base64.b64decode(x)
+#        try:
+#            return x.decode('utf-8')
+#        except:
+#            pass
     
     model_data_bc = None
     model_path = os.path.join(model_dir, 'classify_image_graph_def.pb') #
@@ -47,15 +50,19 @@ def createContext():
 
     ssc = StreamingContext(sc, 2)
     
-    # Define Kafka Consumer
+#    # Define Kafka Consumer
+#    kafkaStream = KafkaUtils.createDirectStream(
+#                      ssc, 
+#                      ['demo'], 
+#                      {"metadata.broker.list":'localhost:9092'},
+#                      keyDecoder=ser, valueDecoder=ser 
+#                                                )
+
     kafkaStream = KafkaUtils.createDirectStream(
-                      ssc, 
-                      ['demo'], 
-                      {"metadata.broker.list":'localhost:9092'},
-                      keyDecoder=ser, valueDecoder=ser 
-                                                )
-    #kafkaStream.pprint()
-    
+                        ssc, 
+                        ['demo'], 
+                        {"metadata.broker.list":'localhost:9092'}
+                                                  )
     # Count number of requests in the batch
     count_this_batch = kafkaStream.count().map(
                            lambda x:('Requests this batch: %s' % x)
@@ -67,7 +74,7 @@ def createContext():
     #                   lambda x:('Requests this window: %s' % x)
     #                                                  )
     #count_window.pprint()
-     
+
     inferred = kafkaStream.map(lambda x: infer(x, model_data_bc))
     inferred.pprint()
     '''
