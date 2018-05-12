@@ -19,7 +19,7 @@ def main():
     KAFKA_BROKERS = config.KAFKA_CONFIG['brokers'] 
     #urlFilePath = os.path.join(config.MODEL_DIR, 'fall11_urls.txt')
 
-    root_dir = '/home/ubuntu/.kaggle/competitions/imagenet-object-detection-challenge/ILSVRC/Data/DET/train/ILSVRC2013_train/n07583066'
+    root_dir = '/home/ubuntu/ILSVRC/Data/DET/test'
  
     producer = KafkaProducer(bootstrap_servers=KAFKA_BROKERS) 
 
@@ -34,10 +34,10 @@ def main():
                 image_coded=base64.b64encode(image).encode('utf-8')
                 producer.send(KAFKA_TOPIC, image_coded).get(timeout=1)
                 record_number += 1
+                #print(record_number)
                 #time.sleep(0.1)
 
     dtWall = time.time() - t0wall
-    print(record_number)
     return dtWall
 
 if __name__ == '__main__':
