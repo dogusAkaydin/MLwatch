@@ -19,12 +19,12 @@ def main():
     KAFKA_BROKERS = config.KAFKA_CONFIG['brokers'] 
     #urlFilePath = os.path.join(config.MODEL_DIR, 'fall11_urls.txt')
 
-    root_dir = '/home/ubuntu/ILSVRC/Data/DET/test'
+    IMAGES_DIR = config.IMAGES_DIR
  
     producer = KafkaProducer(bootstrap_servers=KAFKA_BROKERS) 
 
     record_number = 1
-    for directory, subdirectories, files in os.walk(root_dir):
+    for directory, subdirectories, files in os.walk(IMAGES_DIR):
         for filePath in files:
             image_path=os.path.join(directory,filePath)
             #with codecs.open(urlFilePath, 'r', errors='ignore') as urlFile: #py2

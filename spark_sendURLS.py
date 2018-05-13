@@ -17,10 +17,13 @@ import pyspark_cassandra
 
 # --------------------
 # Kafka related initializations:
-KAFKA_TOPIC   = config.KAFKA_CONFIG['topic'] 
-KAFKA_BROKERS = config.KAFKA_CONFIG['brokers'] 
-MODEL_DIR     = config.MODEL_DIR
-IMAGES_DIR    = config.IMAGES_DIR
+#KAFKA_TOPIC   = config.KAFKA_CONFIG['topic'] 
+#KAFKA_BROKERS = config.KAFKA_CONFIG['brokers'] 
+
+KAFKA_TOPIC = 'demo'
+KAFKA_BROKERS = 'localhost:9092'
+
+model_dir = config.MODEL_DIR
 # ---------------------
 def createContext():
     #sc = SparkContext(master="local[1]", appName="TensorStream")
@@ -33,26 +36,26 @@ def createContext():
     infer = tflow.infer
     
     model_data_bc = None
-    model_path = os.path.join(MODEL_DIR, 'classify_image_graph_def.pb') #
+    model_path = os.path.join(model_dir, 'classify_image_graph_def.pb') #
     with gfile.FastGFile(model_path, 'rb') as f, \
         tf.Graph().as_default() as g:
         model_data = f.read()
         model_data_bc = sc.broadcast(model_data)
 
-    ssc = StreamingContext(sc, 60)
+    ssc = StreamingContext(sc, 2)
     
     # Define Kafka Consumer
     kafkaStream = KafkaUtils.createDirectStream(
                       ssc, 
-                      [KAFKA_TOPIC], 
+                      ['demo'], 
                       {"metadata.broker.list":'localhost:9092'}
                                                 )
+    
     # Count number of requests in the batch
     count_this_batch = kafkaStream.count().map(
-                           lambda x:('Number of requests this batch: %s' % x)
-                                             )
+                           lambda x:('Requests this batch: %s' % x)
+                                              )
     count_this_batch.pprint()
-    #kafkaStream.pprint()
  
     # Count by windowed time period
     #count_window = kafkaStream.countByWindow(20,5).map(
@@ -60,18 +63,15 @@ def createContext():
     #                                                  )
     #count_window.pprint()
 
-    # Print the path requests this batch
+    # Print the URL requests this batch
     parsed   = kafkaStream.map(lambda m: json.loads(m[1]))
-    #parsed.pprint()
-    #reparted = parsed.repartition(18)
-    #reparted.pprint()
-
-    inferred = parsed.map(lambda x: infer(x, model_data_bc))
-    #inferred = reparted.map(lambda x: infer(x, model_data_bc))
+    reparted = parsed.repartition(18)
+    inferred = reparted.map(lambda x: infer(x, model_data_bc))
+    #inferred = parsed.map(lambda x: infer(x, model_data_bc))
     inferred.pprint()
 
     # Filter for None outputs
-    #filtered = inferred.filter(lambda x: not x is None)
+    filtered = inferred.filter(lambda x: not x is None)
     #filtered.pprint()  
   
     #classes = filtered.map(lambda inference: inference['class'])
