@@ -1,8 +1,6 @@
+#! /usr/bin/python
 import sys
-import os
-import json
-import socket
-import errno
+import config
 # --------------------
 # Cassandra related imports
 
@@ -20,14 +18,15 @@ from cassandra.query import SimpleStatement
 # --------------------
 # Cassandra related initializations:
 
-KEYSPACE = "top1"
+KEYSPACE = config.KEYSPACE
 
-cluster = Cluster(['127.0.0.1'])
+cluster = Cluster(['localhost'])
 session = cluster.connect()
 # HDA out:
 # rows = session.execute("SELECT keyspace_name FROM system.schema_keyspaces")
 # HDA in: Function name change  in Cassandra v3.
 rows = session.execute("SELECT keyspace_name FROM system_schema.keyspaces")
+print(rows[0])
 # HDA done. 
 if KEYSPACE in [row[0] for row in rows]:
     log.info("dropping existing keyspace...")
@@ -44,12 +43,22 @@ session.set_keyspace(KEYSPACE)
 
 log.info("creating table...")
 session.execute("""
-    CREATE TABLE Top1_Inception (
+    CREATE TABLE logs (
         reqID text,
         p1 text,
         c1 float,
-        url text,
+        path text,
         PRIMARY KEY (reqID)
+    )
+    """)
+
+log.info("creating table...")
+session.execute("""
+    CREATE TABLE stats (
+        class text,
+        cnt int,
+        avg_score float,
+        PRIMARY KEY (class)
     )
     """)
 

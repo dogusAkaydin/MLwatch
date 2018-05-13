@@ -13,8 +13,6 @@ from kafka import KafkaConsumer
 from tensorflow.python.platform import gfile
 import tensorflow as tf
 
-import pyspark_cassandra
-
 # --------------------
 # Kafka related initializations:
 KAFKA_TOPIC   = config.KAFKA_CONFIG['topic'] 

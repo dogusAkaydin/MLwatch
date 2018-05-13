@@ -5,3 +5,6 @@ KAFKA_CONFIG = {
                 'topic'  : 'demo',
                 'brokers': 'localhost:9092'
                }
+
+KEYSPACE = "inception_v3_top1"
+
