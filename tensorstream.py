@@ -47,7 +47,6 @@ session.set_keyspace(KEYSPACE)
 
 #insert_logs  = session.prepare("INSERT INTO logs  (reqID, p1, c1, path) VALUES (?, ?, ?, ?)")
 #insert_stats = session.prepare("INSERT INTO stats (prediction, count, acc_score) VALUES (?, ?, ?)")
-
 update_stats = session.prepare("UPDATE stats SET count = count + ?, acc_score = acc_score + ? WHERE prediction = ? ")
 
 def sendCassandra(item):
@@ -64,7 +63,6 @@ def sendCassandra(item):
     for record in item:
         #batch.add(insert_log, (int(record[0]), record[1], float(record[2]), record[3]))
         #batch.add(insert_stats, (str(record[0]), int(record[1][0]), float(record[1][1])))
-        #batch.add(update_stats, (str(record[0]), int(record[1][0]), float(record[1][1])))
         batch.add(update_stats, (int(record[1][0]), float(record[1][1]), str(record[0]) ))
 
         # split the batch, so that the batch will not exceed the size limit
@@ -96,7 +94,7 @@ def createContext():
         model_data_bc = sc.broadcast(model_data)
     #model_data_bc = 0
 
-    ssc = StreamingContext(sc, 60)
+    ssc = StreamingContext(sc, 30)
     
     # Define Kafka Consumer
     kafkaStream = KafkaUtils.createDirectStream(
@@ -120,49 +118,20 @@ def createContext():
     # Print the path requests this batch
     paths  = kafkaStream.map(lambda m: (json.loads(m[1])[0], json.loads(m[1])[1]))
     #paths.pprint()
-    #reparted = parsed.repartition(18)
+    reparted = paths.repartition(18)
     #reparted.pprint()
     
-    inferred = paths.map(lambda x: infer(x, model_data_bc))
-    #inferred = reparted.map(lambda x: infer(x, model_data_bc))
+    #inferred = paths.map(lambda x: infer(x, model_data_bc))
+    inferred = reparted.map(lambda x: infer(x, model_data_bc))
     #inferred.pprint()
-
-    #logs = inferred.join(paths)
-    #logs.pprint()
-
-    #logs2 = logs.map(lambda x: (x[0], (x[1][0]['prediction'], float(x[1][0]['score']), str(x[1][1]))))\
-    #            .reduceByKey(lambda x, y: (x[0], x[1], x[2]))
-    #logs2 = logs.map(lambda x: (x[0], (x[1][0]['prediction'], float(x[1][0]['score']), str(x[1][1]))))
-    #logs2 = logs.map(lambda x: (x[0], x[1][0]['prediction'], float(x[1][0]['score']), str(x[1][1])))
-    #logs2.pprint()
-
-    #logs3 = logs2.map(lambda x: (x[1], ([x[2], x[0], x[3]]) ) )
-    #logs3.pprint()
-
+    
     reduced = inferred.reduceByKey(lambda x, y: (x[0]+y[0], x[1]+y[1]))
     #reduced.pprint()
 
     reduced.foreachRDD(lambda rdd: rdd.foreachPartition(sendCassandra))
-
     
-
-    #predictions = logs.map(lambda inference: inference['prediction'])
-    #predictions.pprint()
-
-    #prediction_counts = predictions.countByValue()
-    #prediction_counts.pprint()
-
-    #countClasses = (predictions
-    #                    .countByValueAndWindow(20,5)
-    #                    .map(lambda x:print('HAHAHAH'))
-    #               )
-    #countClasses.pprint()
-   
     return ssc
 
 ssc = createContext()
-#ssc.checkpoint('/tmp/spark_streaming/checkpoint')
-#ssc = StreamingContext.getOrCreate('/tmp/checkpoint_v01', lambda: createContext())  
-#ssc = StreamingContext.getOrCreate('/tmp/checkpoint_v01', lambda: createContext())  
 ssc.start()  
 ssc.awaitTermination()
