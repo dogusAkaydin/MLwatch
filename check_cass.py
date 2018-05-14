@@ -28,39 +28,25 @@ session = cluster.connect()
 rows = session.execute("SELECT keyspace_name FROM system_schema.keyspaces")
 print(rows[0])
 # HDA done. 
-if KEYSPACE in [row[0] for row in rows]:
-    log.info("dropping existing keyspace...")
-    session.execute("DROP KEYSPACE " + KEYSPACE)
-
-log.info("creating keyspace...")
-session.execute("""
-    CREATE KEYSPACE %s
-    WITH replication = { 'class': 'SimpleStrategy', 'replication_factor': '2' }
-    """ % KEYSPACE)
 
 log.info("setting keyspace...")
 session.set_keyspace(KEYSPACE)
 
-#log.info("creating table...")
-#session.execute("""
-#    CREATE TABLE logs (
-#        reqID text,
-#        p1 text,
-#        c1 float,
-#        path text,
-#        PRIMARY KEY (reqID)
-#    )
-#    """)
+future = session.execute_async("SELECT * FROM stats")
+#try:
+#    rows = future.result()
+#except Exception:
+#    log.exception()
 
-log.info("creating table...")
-session.execute("""
-    CREATE TABLE stats (
-        prediction text,
-        count counter,
-        acc_score counter,
-        PRIMARY KEY (prediction)
-    )
-    """)
+rows = future.result()
+for row in rows:
+    #print('Name:{0:.<20s}, Score:{1:4.1f}, URL:{2:.<20s}'.format(row.p1, row.c1, row.url))
+    print('Prediction={}, Count:{}, Avg_Score:{}'.format(row.prediction, row.count, row.avg_score))
+sys.exit()
+
+
+
+
 
 sys.exit
 
