@@ -1,7 +1,6 @@
 import os
 import config  
 # Spark
-#os.environ['PYSPARK_SUBMIT_ARGS'] = '--packages org.apache.spark:spark-streaming-kafka-0-8_2.11:2.0.2 pyspark-shell'
 os.environ['PYSPARK_PYTHON']='python'
 os.environ['PYSPARK_DRIVER_PYTHON']='python'
 from pyspark import SparkContext
@@ -109,12 +108,6 @@ def createContext():
                                              )
     count_this_batch.pprint()
  
-    # Count by windowed time period
-    #count_window = kafkaStream.countByWindow(20,5).map(
-    #                   lambda x:('Requests this window: %s' % x)
-    #                                                  )
-    #count_window.pprint()
-
     # Print the path requests this batch
     paths  = kafkaStream.map(lambda m: (json.loads(m[1])[0], json.loads(m[1])[1]))
     #paths.pprint()
