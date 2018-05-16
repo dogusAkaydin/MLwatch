@@ -40,8 +40,8 @@ future = session.execute_async("SELECT * FROM stats")
 
 rows = future.result()
 for row in rows:
-    #print('Name:{0:.<20s}, Score:{1:4.1f}, URL:{2:.<20s}'.format(row.p1, row.c1, row.url))
-    print('Prediction={}, Count:{}, Avg_Score:{}'.format(row.prediction, row.count, row.acc_score))
+    #print('Prediction = {0:3s}, Count= {1:5d}, Accumulated_Score = {2:10d}'.format(row.prediction, row.count, row.acc_score))
+    print('{:10d}'.format(row.acc_score))
 sys.exit()
 
 

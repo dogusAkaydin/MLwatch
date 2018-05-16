@@ -38,7 +38,7 @@ IMAGES_DIR    = config.IMAGES_DIR
 
 KEYSPACE = config.KEYSPACE
 
-cluster = Cluster(['54.218.154.140', '52.43.242.90', '52.26.55.216', '34.209.1.83' ])
+cluster = Cluster(config.CASS_CLUSTER)
 session = cluster.connect()
 
 log.info("setting keyspace...")
@@ -111,7 +111,7 @@ def createContext():
     # Print the path requests this batch
     paths  = kafkaStream.map(lambda m: (json.loads(m[1])[0], json.loads(m[1])[1]))
     #paths.pprint()
-    reparted = paths.repartition(18)
+    reparted = paths.repartition(3)
     #reparted.pprint()
     
     #inferred = paths.map(lambda x: infer(x, model_data_bc))

@@ -27,7 +27,7 @@ def main():
             print(record_number)
             record_number += 1
             #time.sleep(0.3333)
-            time.sleep(2)
+            time.sleep(1)
 
     dtWall = time.time() - t0wall
     return dtWall
