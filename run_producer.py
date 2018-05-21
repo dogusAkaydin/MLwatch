@@ -26,8 +26,7 @@ def main():
             #print(record_number,' : ', image_path)
             print(record_number)
             record_number += 1
-            #time.sleep(0.3333)
-            time.sleep(1)
+            time.sleep(1.0/150)
 
     dtWall = time.time() - t0wall
     return dtWall

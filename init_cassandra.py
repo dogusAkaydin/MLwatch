@@ -35,7 +35,7 @@ if KEYSPACE in [row[0] for row in rows]:
 log.info("creating keyspace...")
 session.execute("""
     CREATE KEYSPACE %s
-    WITH replication = { 'class': 'SimpleStrategy', 'replication_factor': '2' }
+    WITH replication = { 'class': 'SimpleStrategy', 'replication_factor': '1' }
     """ % KEYSPACE)
 
 log.info("setting keyspace...")

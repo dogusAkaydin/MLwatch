@@ -45,33 +45,20 @@ log.info("setting keyspace...")
 session.set_keyspace(KEYSPACE)
 
 #insert_logs  = session.prepare("INSERT INTO logs  (reqID, p1, c1, path) VALUES (?, ?, ?, ?)")
-#insert_stats = session.prepare("INSERT INTO stats (prediction, count, acc_score) VALUES (?, ?, ?)")
 update_stats = session.prepare("UPDATE stats SET count = count + ?, acc_score = acc_score + ? WHERE prediction = ? ")
 
 def sendCassandra(item):
     print("send to cassandra")
-    cluster = Cluster(['54.218.154.140', '52.43.242.90', '52.26.55.216', '34.209.1.83' ])
+    cluster = Cluster(config.CASS_CLUSTER)
     session = cluster.connect()
     session.execute('USE ' + config.KEYSPACE)
 
-    count = 0
-
     # batch insert into cassandra database
-    #batch = BatchStatement(consistency_level=ConsistencyLevel.QUORUM)
-    batch = BatchStatement( batch_type=BatchType.COUNTER)
+    batch = BatchStatement(batch_type=BatchType.COUNTER)
     for record in item:
         #batch.add(insert_log, (int(record[0]), record[1], float(record[2]), record[3]))
-        #batch.add(insert_stats, (str(record[0]), int(record[1][0]), float(record[1][1])))
         batch.add(update_stats, (int(record[1][0]), float(record[1][1]), str(record[0]) ))
-
-        # split the batch, so that the batch will not exceed the size limit
-        count += 1
-        if count % 500 == 0:
-            session.execute(batch)
-            #batch = BatchStatement(consistency_level=ConsistencyLevel.QUORUM)
-            batch = BatchStatement( batch_type=BatchType.COUNTER)
-
-    # send the batch that is less than 500            
+ 
     session.execute(batch)
     session.shutdown()
 
@@ -87,13 +74,11 @@ def createContext():
     
     model_data_bc = None
     model_path = os.path.join(MODEL_DIR, 'classify_image_graph_def.pb') #
-    with gfile.FastGFile(model_path, 'rb') as f, \
-        tf.Graph().as_default() as g:
+    with gfile.FastGFile(model_path, 'rb') as f:
         model_data = f.read()
         model_data_bc = sc.broadcast(model_data)
-    #model_data_bc = 0
 
-    ssc = StreamingContext(sc, 30)
+    ssc = StreamingContext(sc, 15)
     
     # Define Kafka Consumer
     kafkaStream = KafkaUtils.createDirectStream(
@@ -109,19 +94,19 @@ def createContext():
     count_this_batch.pprint()
  
     # Print the path requests this batch
-    paths  = kafkaStream.map(lambda m: (json.loads(m[1])[0], json.loads(m[1])[1]))
-    #paths.pprint()
-    reparted = paths.repartition(3)
+    reparted = kafkaStream.repartition(96)
     #reparted.pprint()
     
-    #inferred = paths.map(lambda x: infer(x, model_data_bc))
-    inferred = reparted.map(lambda x: infer(x, model_data_bc))
-    #inferred.pprint()
+    paths  = reparted.map(lambda m: json.loads(m[1])[1])
+    #paths.pprint()
     
-    reduced = inferred.reduceByKey(lambda x, y: (x[0]+y[0], x[1]+y[1]))
+    inferred = paths.mapPartitions(lambda x: infer(x, model_data_bc))
+    inferred.pprint()
+    
+    #reduced = inferred.reduceByKey(lambda x, y: (x[0]+y[0], x[1]+y[1]))
     #reduced.pprint()
 
-    reduced.foreachRDD(lambda rdd: rdd.foreachPartition(sendCassandra))
+    #reduced.foreachRDD(lambda rdd: rdd.foreachPartition(sendCassandra))
     
     return ssc
 
