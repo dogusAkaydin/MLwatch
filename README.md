@@ -25,7 +25,8 @@ While a sub-minute delay is not necessary for monitoring the performance metrics
 * Database: Cassandra to store prediction frequency and cumulative confidence for each label.
 I chose Cassandra because I knew the queries I needed and I wanted take advantage of high write speed and relatively easy scalability of Cassandra. 
 * User Interface: Dash to display the frequency and confidence levels over the set of 1,000 labels based on the all the predictions to date.
-
+For example, the following pair of plots show the frequency and average confidence of each ImageNet label that has been predicted thus far, and they get updated periodically  (e. g. once a minute).
+If a particular label turns out to be served very frequently and its confidence level is low then this could be an indication that the ML model needs to be retrained regarding that label. 
 ![The plots](./visuals/ui.png)
 
 ## Tackling the challenges (one bottleneck at a time)
