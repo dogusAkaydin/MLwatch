@@ -7,11 +7,11 @@ Being able to serve online ML predictions at scale is important in many use case
 Furthermore, unpredictable shifts in live data is a common concern for many production ML models once they are deployed. 
 The ML model developers may not always have the metrics ready to help them decide when to retrain their models. 
 As a result, they retrain the models at frequencies which may be more or less than actually needed. 
-MLwatch aims to produce near-real-time statistics on the predictions of the model to help ML model developers monitor fitness of the model to shifts in the incoming data.
+MLwatch aims to produce near realtime statistics on the predictions of the model to help ML model developers monitor fitness of the model to shifts in the incoming data.
 
 ## The DE challenges
 
-The primary data engineering challenge in this system is to integrate the ML component to the datapipleline so that a high-number of inferences can be made (e.g. 1000 inference/sec.) with a relatively small time delay ( <1 min). 
+The main data engineering challenge in this system is to integrate the ML component to the datapipleline so that a high-number of inferences can be made (e.g. 1000 inferences/sec.) with a relatively small time delay (<1 min). 
 While a sub-minute delay is not necessary for monitoring the performance metrics, it would be useful in case an anomaly-detection mechanism would be tied to this pipeline. 
 
 ## The pipeline
@@ -19,14 +19,14 @@ While a sub-minute delay is not necessary for monitoring the performance metrics
 ![The architecture](./visuals/arch.jpg)
 
 * Data: Images from the test set of ImageNet Object Recognition Challenge dataset on Kaggle.
-* Resources: 4 m4.large nodes (2 vCPUs and 8GB memory each), 1 serving as a master node and 3 serving as Spark workers with 3x oversubscription (`SPARK_WORKER_CORES=6`).  
-* Ingestion: A Kafka producer writing the paths to the images to a single topic at a controllable rate.
+* Resources: 4 AWS m4.large nodes (2 vCPUs and 8GB memory each), 1 serving as a master node and 3 serving as Spark workers with 3x oversubscription (`SPARK_WORKER_CORES=6`).  
+* Ingestion: A Kafka producer writing filesystem paths of the images to a single topic at a controllable rate.
 * Processing: Tensorflow instances using Inception V3 pretrained model, created and managed by Spark Streaming. 
 * Database: Cassandra to store prediction frequency and cumulative confidence for each label.
 I chose Cassandra because I knew the queries I needed and I wanted take advantage of high write speed and relatively easy scalability of Cassandra. 
 * User Interface: Dash to display the frequency and confidence levels over the set of 1,000 labels based on the all the predictions to date.
 For example, the following pair of plots show the frequency and average confidence of each ImageNet label that has been predicted thus far, and they get updated periodically  (e. g. once a minute).
-If a particular label turns out to be served very frequently and its confidence level is low then this could be an indication that the ML model needs to be retrained regarding that label. 
+If a particular label turns out to be served very frequently and its confidence level is below a certain treshol then this could be an indication that the ML model needs to be retrained regarding that label. 
 ![The plots](./visuals/ui.png)
 
 ## Tackling the challenges (one bottleneck at a time)
@@ -72,7 +72,7 @@ def infer(path, broadcast_data)
 ```
 
 This modification massively increased the inference rate to ~150 inferences/sec. (or ~50 inferences/sec. per node).
-I was able to repartition each batch as high as `.repartition(108)` and process over 2,000 requests under 15 seconds for several batches.
+I was able to repartition each batch as high as `.repartition(108)` and process over 2,000 item batches under 15 seconds.
 This iteration was the most challenging and rewarding improvement I have done on this pipeline thus far.
 This is also where I had to stop improving on the project and move on to the rest of the interview preparations. 
 The current bottleneck is the `.reduceByKey` operation, which presumably suffers from a very little memory left after after all the Tensorflow instances deployed.
