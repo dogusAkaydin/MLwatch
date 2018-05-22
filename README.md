@@ -72,10 +72,11 @@ def infer(path, broadcast_data)
 ```
 
 This modification massively increased the inference rate to ~150 inferences/sec. (or ~50 inferences/sec. per node).
-I was able to repartition each batch as high as `.repartition(108)` and process over 2,000 item batches under 15 seconds.
+I was able to repartition each batch as high as `.repartition(108)` and process 15-second batches of over 2,000 records each just under 15 seconds.
 This iteration was the most challenging and rewarding improvement I have done on this pipeline thus far.
-This is also where I had to stop improving on the project and move on to the rest of the interview preparations. 
-The current bottleneck is the `.reduceByKey` operation, which presumably suffers from a very little memory left after after all the Tensorflow instances deployed.
+This iteration was also where I had to stop working on the project and concentrate on the rest of the interview preparations.
+
+The current bottleneck is the `.reduceByKey` operation, which presumably suffers from a very little memory left after all the Tensorflow instances deployed.
 I have also observed that Cassandra service would go down in any one of the worker nodes during the process. 
 I played around with related Spark configuration settings related to memory allocations to leave some room for the rest of the operations. 
 However, I could not make the rest of the pipeline to keep up with the high-rate of inferences completed; I was able sustain only about 15 inferences/sec. across the whole pipeline down to Cassandra. 
